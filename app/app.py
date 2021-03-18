@@ -14,10 +14,10 @@ def hello():
 def login():
     return render_template('login_html')
 
-@app.route('/')
-@app.route('/<custom_name>')
-def hello(custom_name="World"):
-    return f"Hello, {custom_name}!"
+#@app.route('/')
+#@app.route('/<custom_name>')
+#def hello(custom_name="World"):
+#    return f"Hello, {custom_name}!"
 
 @app.route("/md5/<string:words>")
 def md5(words):
