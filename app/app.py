@@ -17,6 +17,12 @@ def md5(words, chars=string.ascii_letters + string.digits):
     txt=(''.join(random.choice(chars) for x in range(leng)))
     return f"{x}\n\"input\": {words},\n\"output\": {txt}\n{y}"
 
+@app.route("/factorial/<int:num>")
+def factor(num,fact=1):
+    for i in range(1,num+1):
+        fact = fact * i
+    return f"input: {num}, output: {fact}"
+
 @app.route('/fibonacci/<int:val>')
 def term(val):
     x="{"
@@ -31,25 +37,6 @@ def term(val):
         return f"{x}\n\"input\": {val},\n\"output\": {Sequence}\n{y}"
     elif val <=0:
         return f"That is not a valid number"
-
-@app.route("/fibonacci/<int:num>")
-def fibo(num):
-    nterms = num
-    n1, n2 = 0, 1
-    count = 0
-    if nterms < 0:
-        return f"Please enter a positive integer"
-    elif nterms == 1:
-        return f"{n1}"
-    else:
-        while count < nterms:
-            array = []
-            nth = n1 + n2
-            n1 = n2
-            n2 = nth
-            array.append(n1)
-            count += 1
-        return f"{array}"
 
 @app.route("/is-prime/<int:num>")
 def prime(num):
