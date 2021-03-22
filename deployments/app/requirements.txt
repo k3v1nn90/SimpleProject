@@ -9,3 +9,5 @@ quote_plus
 request
 parse
 json
+random
+string
