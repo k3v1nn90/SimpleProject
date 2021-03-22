@@ -21,24 +21,19 @@ def factor(num,fact=1):
         fact = fact * i
     return f"{x}\n\"input\": {num},\n\"output\": {fact}\n{y}"
 
-@app.route("/fibonacci/<int:num>")
-def fibo(num):
-    nterms = num
-    n1, n2 = 0, 1
-    count = 0
-    if nterms < 0:
-        return f"Please enter a positive integer"
-    elif nterms == 1:
-        return f"{n1}"
-    else:
-        while count < nterms:
-            array = []
-            nth = n1 + n2
-            n1 = n2
-            n2 = nth
-            array.append(n1)
-            count += 1
-        return f"{array}"
+@app.route('/fibonacci/<int:val>')
+    def term(val):
+    Out = 0
+    Sequence = [0,1]
+
+    if val > 0:
+        while Out < val:
+            Out = Sequence[-1] + Sequence[-2]
+            if (Out < val):
+                Sequence.append(Out)
+        return f"The result is: {Sequence}."
+    elif val <=0:
+        return f"That is not a valid number"
 
 @app.route("/is-prime/<int:num>")
 def prime(num):
