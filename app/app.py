@@ -10,7 +10,7 @@ app = Flask(__name__)
 def md5(words):
     x="{"
     y="}"
-    encoded_query = string.encode(urllib.parse.quote(words))
+    encoded_query = urllib.parse.quote(words)
     return f"{x}\n\"input\": {words},\n\"output\": {encoded_query}\n{y}"
 
 @app.route("/factorial/<int:num>")
@@ -65,7 +65,7 @@ def alert(text):
     post = {"text": "{0}".format(text)}
     try:
         json_data = json.dumps(post)
-        req = request.Request("https://hooks.slack.com/services/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",data=json_data.encode('ascii'),headers={'Content-Type': 'application/json'}) 
+        req = request.Request("https://hooks.slack.com/services/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",data=json_data.encode('ascii'),headers={'Content-Type': 'application/json'}) 
         resp = request.urlopen(req)
         return f"{x}\n\"input\": {text},\n\"output\": {a}\n{y}"     
     except Exception as em:
