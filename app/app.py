@@ -65,7 +65,7 @@ def alert(text):
     post = {"text": "{0}".format(text)}
     try:
         json_data = json.dumps(post)
-        req = request.Request("https://hooks.slack.com/services/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",data=json_data.encode('ascii'),headers={'Content-Type': 'application/json'}) 
+        req = request.Request("https://hooks.slack.com/services/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",data=json_data.encode('ascii'),headers={'Content-Type': 'application/json'}) 
         resp = request.urlopen(req)
         return f"{x}\n\"input\": {text},\n\"output\": {a}\n{y}"     
     except Exception as em:
