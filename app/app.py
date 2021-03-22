@@ -1,63 +1,78 @@
-#coding: utf-8
-
-from flask import Flask, Response, jsonify, render_template
-from urllib.parse import urlparse, urlencode, quote_plus
+from flask import Flask, Response, jsonify
 import urllib.parse
+from urllib.parse import urlparse, urlencode, quote_plus
+from urllib import request, parse
+import json
 
 app = Flask(__name__)
 
-@app.route("/")
-def hello():
-    return render_template('index.html')
-
-@app.route("/")
-def login():
-    return render_template('login_html')
-
-#@app.route('/')
-#@app.route('/<custom_name>')
-#def hello(custom_name="World"):
-#    return f"Hello, {custom_name}!"
-
 @app.route("/md5/<string:words>")
 def md5(words):
-    query = (words)
-    encodeded_query = urllib.parse.quote(query)
-    return f"input: {words}, output: {encodeded_query}"
+    x="{"
+    y="}"
+    encoded_query = urllib.parse.quote(words)
+    return f"{x}\n\"input\": {words},\n\"output\": {encoded_query}\n{y}"
 
 @app.route("/factorial/<int:num>")
 def factor(num,fact=1):
+    x="{"
+    y="}"
     for i in range(1,num+1):
         fact = fact * i
-    return f"input: {num}, output: {fact}"
+    return f"{x}\n\"input\": {num},\n\"output\": {fact}\n{y}"
 
 @app.route("/fibonacci/<int:num>")
 def fibo(num):
-    if num == 0:
-        return f"input: 0, output: 0"
-    elif num == 1 or num == 2:
-        return f"input: {num}, output: 1"
+    nterms = num
+    n1, n2 = 0, 1
+    count = 0
+    if nterms < 0:
+        return f"Please enter a positive integer"
+    elif nterms == 1:
+        return f"{n1}"
     else:
-        a = fibo(num-1)+fibo(num-2)
-        return f"input: {num}, output: {a}"
+        while count < nterms:
+            array = []
+            nth = n1 + n2
+            n1 = n2
+            n2 = nth
+            array.append(n1)
+            count += 1
+        return f"{array}"
 
 @app.route("/is-prime/<int:num>")
 def prime(num):
+    x="{"
+    y="}"
     a = "True"
     b = "False"
     if num > 1:
         for i in range(2, int(num/2)+1):
             if (num % i) == 0:
-                return b
+                return f"{x}\n\"input\": {num},\n\"output\": {b}\n{y}"
         else:
-            return a
+            return f"{x}\n\"input\": {num},\n\"output\": {a}\n{y}"
     else:
-        return b
+        return f"{x}\n\"input\": {num},\n\"output\": {b}\n{y}"
     return
 
-@app.route('/slack-alert/<string:words>')
-def alert(words):    
-    return ('')
-
-if __name__ == '__main__':
-    app.run(debug=False,host='0.0.0.0')
+@app.route('/slack-alert/<string:text>')
+def alert(text):
+    x="{"
+    y="}"
+    a = "True"
+    b = "False"
+    post = {"text": "{0}".format(text)}
+    try:
+        json_data = json.dumps(post)
+        req = request.Request("https://hooks.slack.com/services/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",data=json_data.encode('ascii'),headers={'Content-Type': 'application/json'}) 
+        resp = request.urlopen(req)        
+    except Exception as em:
+        print("EXCEPTION: " + str(em))
+        return f"{x}\n\"input\": {text},\n\"output\": {b}\n{y}"
+    alert(f'{text}')
+    exit(0)
+    return f"{x}\n\"input\": {text},\n\"output\": {a}\n{y}"
+    
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000)
