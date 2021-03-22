@@ -13,16 +13,24 @@ def md5(words, chars=string.ascii_letters + string.digits):
     x="{"
     y="}"
     leng = len(words)
+    words = urllib.parse.quote(words)
     txt=(''.join(random.choice(chars) for x in range(leng)))
     return f"{x}\n\"input\": {words},\n\"output\": {txt}\n{y}"
 
-@app.route("/factorial/<int:num>")
-def factor(num,fact=1):
+@app.route('/fibonacci/<int:val>')
+def term(val):
     x="{"
     y="}"
-    for i in range(1,num+1):
-        fact = fact * i
-    return f"{x}\n\"input\": {num},\n\"output\": {fact}\n{y}"
+    Out = 0
+    Sequence = [0,1]
+    if val > 0:
+        while Out < val:
+            Out = Sequence[-1] + Sequence[-2]
+            if (Out < val):
+                Sequence.append(Out)
+        return f"{x}\n\"input\": {val},\n\"output\": {Sequence}\n{y}"
+    elif val <=0:
+        return f"That is not a valid number"
 
 @app.route("/fibonacci/<int:num>")
 def fibo(num):
