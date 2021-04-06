@@ -25,9 +25,11 @@ def md5(words, chars=string.ascii_letters + string.digits):
 
 @app.route("/factorial/<int:num>")
 def factor(num,fact=1):
+    x="{"
+    y="}"
     for i in range(1,num+1):
         fact = fact * i
-    return f"input: {num}, output: {fact}"
+    return f"{x}\n\"input\": {num},\n\" output\": {fact}\n{y}"
 
 @app.route('/fibonacci/<int:val>')
 def term(val):
