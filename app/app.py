@@ -1,10 +1,14 @@
-from flask import Flask, Response, jsonify
-import urllib.parse
-from urllib.parse import urlparse, urlencode, quote_plus
-from urllib import request, parse
 import json
+import urllib.parse
 import string
 import random
+import os
+import socket
+from redis import Redis, RedisError
+from flask import Flask, Response, jsonify, request
+from urllib.parse import urlparse, urlencode, quote_plus
+
+redis = Redis(host="redis", db=0, socket_connect_timeout=2, socket_timeout=2)
 
 app = Flask(__name__)
 
@@ -56,6 +60,7 @@ def prime(num):
 
 @app.route('/slack-alert/<string:text>')
 def alert(text):
+    from urllib import request, parse
     x="{"
     y="}"
     a = "True"
@@ -70,7 +75,69 @@ def alert(text):
         print("EXCEPTION: " + str(em))
         return f"{x}\n\"input\": {text},\n\"output\": {b}\n{y}"
     alert(f'{text}')
+    
+@app.route('/keyval', methods=['POST','PUT'])
+def ppkey(key):
+    json = JsonResponse(command='CREATE' if request.method=='POST' else 'UPDATE')
 
+    try:
+        payload = request.get_json()
+        json.key = payload['key']
+        json.value = payload['value']
+        json.command = f"{payload['key']}/{payload['value']}"
+    except:
+        json.error = 'Missing or malforced JSON in client request.'
+        return jsonify(json), 400
+
+    try:
+        test = redis.get(json.key)
+    except:
+        json.error = 'Cannot connect to redis.'
+        return jsonify(json), 400
+
+    if request.method == 'POST' and not test == None:
+        json.error = "Cannot create new record: key already exists."
+        return jsonify(json), 409
+    elif request.method == 'PUT' and not test == None:
+        json.error = "Cannot update record: key does not exist"
+        return jsonify(json), 404
+    else:
+        if redis.set(json.key, json.value) == False:
+            json.error = "There was a problem creating the value in Redis."
+            return jsonify(json), 400
+        else:
+            json.result = True
+            return jsonify(json), 200
+
+@app.route('/keyval/<string:k>', methods=['GET','DELETE'])
+def gdkey(k):
+    _JSON = {
+        "key": k,
+        "value": None,
+        "command": "{} {}".format('RETRIEVE' if request.method=='GET' else 'DELETE', k),
+        "result": False,
+        "error": None
+    } 
+    try:
+        test = redis.get(k)
+    except RedisError:
+        _JSON['error'] = "Cannot connect to redis."
+        return jsonify(_JSON), 400
+    if test == None:
+        _JSON['error'] = "Key does not exist"
+        return jsonify(_JSON), 404
+    else:
+        _JSON['value'] = test.decode('unicode-escape')
+
+    if request.method == 'GET' and not test == None:
+        json.error = "Cannot retrieve record: key does not exists."
+        return jsonify(_JSON), 404
+    elif request.method == 'DELETE' and not test == None:
+        json.error = "Cannot delete record: key does not exist"
+        return jsonify(_JSON), 404
+    else:
+        json.result = True
+        return jsonify(_JSON), 200
     
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
