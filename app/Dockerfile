@@ -1,6 +1,5 @@
-FROM python:3
-ADD app/ /app
+FROM python:3.8-slim
 WORKDIR /app
-RUN apt-get update
-RUN pip install -r requirements.txt
-CMD [python app.py]
+COPY . /app
+RUN pip install --trusted-host pypi.python.org -r requirements.txt
+CMD ["python", "app.py"]
