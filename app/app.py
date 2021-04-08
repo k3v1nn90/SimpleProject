@@ -100,10 +100,10 @@ def ppkey(key):
         return jsonify(json), 400
 
     if request.method == 'POST' and not test == None:
-        json.error = "Cannot create new record: key already exists."
+        json.error = "Key already exists."
         return jsonify(json), 409
     elif request.method == 'PUT' and not test == None:
-        json.error = "Cannot update record: key does not exist"
+        json.error = "Key does not exist"
         return jsonify(json), 404
     else:
         if redis.set(json.key, json.value) == False:
@@ -115,7 +115,7 @@ def ppkey(key):
 
 @app.route('/keyval/<string:k>', methods=['GET','DELETE'])
 def gdkey(k):
-    _JSON = {
+    JSON = {
         "key": k,
         "value": None,
         "command": "{} {}".format('RETRIEVE' if request.method=='GET' else 'DELETE', k),
@@ -125,23 +125,20 @@ def gdkey(k):
     try:
         test = redis.get(k)
     except RedisError:
-        _JSON['error'] = "Cannot connect to redis."
-        return jsonify(_JSON), 400
+        JSON['error'] = "Cannot connect to redis."
+        return jsonify(JSON), 400
     if test == None:
-        _JSON['error'] = "Key does not exist"
-        return jsonify(_JSON), 404
+        JSON['error'] = "Key does not exist"
+        return jsonify(JSON), 404
     else:
-        _JSON['value'] = test.decode('unicode-escape')
+        JSON['value'] = test.decode('unicode-escape')
 
-    if request.method == 'GET' and not test == None:
-        json.error = "Cannot retrieve record: key does not exists."
-        return jsonify(_JSON), 404
-    elif request.method == 'DELETE' and not test == None:
-        json.error = "Cannot delete record: key does not exist"
-        return jsonify(_JSON), 404
-    else:
-        json.result = True
-        return jsonify(_JSON), 200
+    if request.method == 'GET':
+        json['result'] = True
+        return jsonify(JSON), 200
+    elif request.method == 'DELETE':
+        json['result'] = True
+        return jsonify(JSON), 200
     
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
