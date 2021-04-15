@@ -1,11 +1,4 @@
 flask
 Flask
-Response
 jsonify
-urllib.parse
-urlparse
-urlencode
-quote_plus
-request
-parse
-json
+Redis

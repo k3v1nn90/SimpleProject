@@ -1,17 +1,27 @@
-from flask import Flask, Response, jsonify
-import urllib.parse
-from urllib.parse import urlparse, urlencode, quote_plus
-from urllib import request, parse
+#coding: utf-8
+
 import json
+import urllib.parse
+import string
+import random
+import os
+import socket
+from redis import Redis, RedisError
+from flask import Flask, Response, jsonify, request
+from urllib.parse import urlparse, urlencode, quote_plus
+
+redis = Redis(host="redis", db=0, socket_connect_timeout=2, socket_timeout=2)
 
 app = Flask(__name__)
 
 @app.route("/md5/<string:words>")
-def md5(words):
+def md5(words, chars=string.ascii_letters + string.digits):
     x="{"
     y="}"
-    encoded_query = urllib.parse.quote(words)
-    return f"{x}\n\"input\": {words},\n\"output\": {encoded_query}\n{y}"
+    leng = len(words)
+    words = urllib.parse.quote(words)
+    txt=(''.join(random.choice(chars) for x in range(leng)))
+    return f"{x}\n\"input\": {words},\n\"output\": {txt}\n{y}"
 
 @app.route("/factorial/<int:num>")
 def factor(num,fact=1):
@@ -19,26 +29,22 @@ def factor(num,fact=1):
     y="}"
     for i in range(1,num+1):
         fact = fact * i
-    return f"{x}\n\"input\": {num},\n\"output\": {fact}\n{y}"
+    return f"{x}\n\"input\": {num},\n\" output\": {fact}\n{y}"
 
-@app.route("/fibonacci/<int:num>")
-def fibo(num):
-    nterms = num
-    n1, n2 = 0, 1
-    count = 0
-    if nterms < 0:
-        return f"Please enter a positive integer"
-    elif nterms == 1:
-        return f"{n1}"
-    else:
-        while count < nterms:
-            array = []
-            nth = n1 + n2
-            n1 = n2
-            n2 = nth
-            array.append(n1)
-            count += 1
-        return f"{array}"
+@app.route('/fibonacci/<int:val>')
+def term(val):
+    x="{"
+    y="}"
+    Out = 0
+    Sequence = [0,1]
+    if val > 0:
+        while Out < val:
+            Out = Sequence[-1] + Sequence[-2]
+            if (Out < val):
+                Sequence.append(Out)
+        return f"{x}\n\"input\": {val},\n\"output\": {Sequence}\n{y}"
+    elif val <=0:
+        return f"That is not a valid number"
 
 @app.route("/is-prime/<int:num>")
 def prime(num):
@@ -58,6 +64,7 @@ def prime(num):
 
 @app.route('/slack-alert/<string:text>')
 def alert(text):
+    from urllib import request, parse
     x="{"
     y="}"
     a = "True"
@@ -65,14 +72,73 @@ def alert(text):
     post = {"text": "{0}".format(text)}
     try:
         json_data = json.dumps(post)
-        req = request.Request("https://hooks.slack.com/services/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",data=json_data.encode('ascii'),headers={'Content-Type': 'application/json'}) 
+        req = request.Request("https://hooks.slack.com/services/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",data=json_data.encode('ascii'),headers={'Content-Type': 'application/json'}) 
         resp = request.urlopen(req)
         return f"{x}\n\"input\": {text},\n\"output\": {a}\n{y}"     
     except Exception as em:
         print("EXCEPTION: " + str(em))
         return f"{x}\n\"input\": {text},\n\"output\": {b}\n{y}"
     alert(f'{text}')
+    
+@app.route('/keyval', methods=['POST','PUT'])
+def ppkey(key):
+    json = JsonResponse(command='CREATE' if request.method=='POST' else 'UPDATE')
 
+    try:
+        payload = request.get_json()
+        json.key = payload['key']
+        json.value = payload['value']
+        json.command = f"{payload['key']}/{payload['value']}"
+    except:
+        json.error = 'Missing or malforced JSON in client request.'
+        return jsonify(json), 400
+
+    try:
+        test = redis.get(json.key)
+    except:
+        json.error = 'Cannot connect to redis.'
+        return jsonify(json), 400
+
+    if request.method == 'POST' and not test == None:
+        json.error = "Key already exists."
+        return jsonify(json), 409
+    elif request.method == 'PUT' and not test == None:
+        json.error = "Key does not exist"
+        return jsonify(json), 404
+    else:
+        if redis.set(json.key, json.value) == False:
+            json.error = "There was a problem creating the value in Redis."
+            return jsonify(json), 400
+        else:
+            json.result = True
+            return jsonify(json), 200
+
+@app.route('/keyval/<string:k>', methods=['GET','DELETE'])
+def gdkey(k):
+    JSON = {
+        "key": k,
+        "value": None,
+        "command": "{} {}".format('RETRIEVE' if request.method=='GET' else 'DELETE', k),
+        "result": False,
+        "error": None
+    } 
+    try:
+        test = redis.get(k)
+    except RedisError:
+        JSON['error'] = "Cannot connect to redis."
+        return jsonify(JSON), 400
+    if test == None:
+        JSON['error'] = "Key does not exist"
+        return jsonify(JSON), 404
+    else:
+        JSON['value'] = test.decode('unicode-escape')
+
+    if request.method == 'GET':
+        json['result'] = True
+        return jsonify(JSON), 200
+    elif request.method == 'DELETE':
+        json['result'] = True
+        return jsonify(JSON), 200
     
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
