@@ -14,5 +14,5 @@ jobs:
         with:
           username: ${{ secrets.k3v1nn90 }}
           password: ${{ secrets.P00pP00pP00p }}
-          repository: my-docker-hub-namespace/my-docker-hub-repository
+          repository: https://hub.docker.com/repository/docker/k3v1nn90/project5
           tag_with_ref: true
